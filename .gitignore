@@ -1,0 +1,18 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+.env
+column_guide.csv
+data/*
+!data/.gitkeep
+.qodo/
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+.DS_Store

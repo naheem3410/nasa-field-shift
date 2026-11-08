@@ -1,0 +1,124 @@
+
+
+
+1. This repository contains open soil analysis data for the African continent. For more information about this effort, please visit https: https://isda-africa.com/isdasoil/open-soil-data/.
+
+
+
+2. ISRIC—World Soil Information is compiling legacy soil profile data for Sub-Saharan Africa, as a project activity of the Globally integrated-Africa Soil Information Service (AfSIS) project.
+
+3. Mendeley data: Data for: Free, open, quantitative and adaptable digital soil map and database for Nigeria
+Published: 26 April 2021
+|
+Version 1
+|
+DOI:
+10.17632/zmrt6k83wk.1
+Contributor:
+Ugonna Nkwunonwo
+Description
+Nigeria’s DSM data and soil database of Nigeria is a predictive or computer-assisted digital depiction of Nigeria’s soil types, properties and spatial distribution. In this novel DSM data and soil database, secondary data in the form of compiled hard copies, derived from the 1985 reconnaissance soil survey are transformed into vectors and symbols encoded and held as data structures within the map layout. The DSM data and its database hold information relating to the Nigerian soil in geographically referenced numerical format. Thus, it delineates quantitatively and interactively the 58 soil components (soil mapping units), based on three ecological zones, twenty-four broad geomorphic units and parent materials in Nigeria. These soil mapping units are numbered from ‘1a’ to ‘24b’ and provides much quantitative information for environmental modelling and analyses using the Nigeria’s DSM data and database (Refer to [1] for a full list of the mapping units that describes the Nigeria’s soil distribution and their spatial distinctions).
+
+
+
+
+Practical suggestions
+
+Use iSDAsoil as your main soil layer because it covers the whole country at field scale. Use the national map and IITA points to cross-check it.
+
+Build a crop traits table yourself for the 8–10 crops in your pilot. Take temperature and rainfall ranges from ECOCROP, water use from FAO, seasons and varieties from IITA, and nitrogen fixation and disease family from the papers we found earlier.
+
+Label every value with its source and flag soil values as modelled estimates, since the challenge asks for explanations of data gaps.
+
+
+
+
+
+I was using shorthand, and the terms overlap. Here are the four sources in plain terms.
+
+| Source | What it is | What I mean |
+|---|---|---|
+| **iSDAsoil (30 m maps)** | A computer model's prediction of soil properties for every spot in Africa. You have not downloaded it yet. You get it through its API with your latitude and longitude. | "For estimates": it gives a value for any field you pick, but the value is a guess made by a model, with an error margin. |
+| **ISRIC zip (AfSP)** | Real soil samples dug up and tested in labs, mostly in the 1970s and 80s. | "Measured points": actual lab results, but only at scattered spots, and old. |
+| **GitHub CSV (iSDA)** | Real soil samples tested between 2008 and 2018. | "Measured points": newer lab results, also scattered, and far from many places. |
+| **Nigeria soil map** | A 1980s survey map, scanned and digitized, that divides Nigeria into regions and describes each one. | "For drainage and depth": it tells you the typical drainage and soil depth for the region your field is in. |
+
+When I said "your two downloads," I meant the ISRIC zip and the GitHub CSV together. You have actually sent three downloads: those two plus the Nigeria soil map.
+
+## How they fit together
+- **iSDAsoil** answers: what is the soil like at my exact field? It is a prediction, so it comes with uncertainty.
+- **Measured points** (ISRIC and GitHub) answer: what did real tests show nearby? They check the model and show how far away the nearest real test is. Use a measured value when one sits very close to the field.
+- **Nigeria soil map** answers: what are the drainage and depth in this region? It is the only one of the four that gives drainage.
+
+A farmer would see something like: "Estimated pH 5.5 (model prediction). Nearest real soil test was 3 km away and measured 5.4. Regional map says this area is poorly drained."
+
+None of these gives the full picture alone. Together they cover each other's gaps.
+
+I can make a single function that returns all of these for one coordinate in one output, if you want.
+
+
+
+
+
+I'll check the current status of each mission and how to access it, since several of these have changed recently.
+
+Of the eight, five should go into your tool: NASA POWER, GPM IMERG, SRTM or another elevation source, SMAP, and a vegetation index (MODIS now, VIIRS later). Landsat and ECOSTRESS are optional extras, and GRACE is too coarse to use at farm level. All are free, and nearly all need only a free Earthdata account.
+
+## The datasets
+
+| Dataset | What it measures | Resolution | Use in your tool | Verdict |
+|---|---|---|---|---|
+| **NASA POWER** | Daily temperature, rainfall, solar radiation, humidity and wind, from 1981 | About 0.5° (roughly 50 km) for weather, coarser for solar | Growing-season length, heat and cold stress, the water balance, crop timing | Must have |
+| **GPM IMERG** | Satellite rainfall, 30-minute, daily or monthly, from 2000 | 0.1° (about 10 km) | Better rainfall than POWER, since it captures local storms. Gives dry-spell counts, season onset, and rain variability by year | Must have |
+| **SRTM / NASADEM** | Elevation (one-time snapshot from 2000) | 30 m | Slope, erosion risk, low spots that waterlog, and a rough "where does water collect" estimate | Must have |
+| **SMAP** | Soil moisture in the top 5 cm. The L4 product also estimates the root zone | L4 at 9 km, 3-hourly | Whether the soil was wet or dry in past seasons, and drought stress across the season | Must have, as regional context |
+| **MODIS (then VIIRS)** | Plant greenness (NDVI/EVI), evapotranspiration, productivity, land surface temperature | 250 m to 1 km | Crop vigour by season, so you can check what each past rotation actually did to plant growth | Must have (see the warning) |
+| **Landsat** | Multispectral images, usable for NDVI and field-level change | 30 m, every 8 to 16 days | Sharper than MODIS at field scale, so you can separate fields | Optional, good if time allows |
+| **ECOSTRESS** | Plant water stress and evapotranspiration from thermal imagery | 70 m, irregular revisits from the space station | Field-scale water stress | Optional |
+| **GRACE / GRACE-FO** | Changes in total water storage, including groundwater | About 300 km (a coarse monthly map) | Regional drought context only | Skip for farm decisions |
+
+## How each one helps the challenge
+
+The challenge wants you to compare rotations and explain why. Your soil data says what the field is like. These datasets tell you what the weather and the crop did:
+
+- **POWER and IMERG:** Rain, heat and sunshine decide whether a crop's growing season fits the year. They let you say, for example, "this location has about N reliable rainy months, so a 150-day maize-after-legume sequence fits, but a second crop is risky."
+- **SRTM:** Slope and low spots change erosion, runoff and waterlogging. This goes into rotation reasoning, such as where cassava is risky because of poor drainage.
+- **SMAP:** It shows how dry or wet recent seasons were, which feeds a drought-risk score.
+- **MODIS, VIIRS and Landsat NDVI:** Greenness over time is the only direct evidence of how crops performed. You can compare seasons and see what rotation history correlates with.
+- **ECOSTRESS and GRACE:** They add little here. ECOSTRESS has irregular coverage, and GRACE is far too coarse.
+
+None of these tells you the crop or the rotation history of a particular field. That has to come from the farmer, which fits the challenge's "support, not replace farmer judgment" point.
+
+## What to watch out for
+
+- **MODIS is ending.** NASA's notice says the Terra and Aqua satellites that carry MODIS are expected to begin shutting down in late 2026 or early 2027. Both are drifting out of their designed orbits, which affects crossing times. Use VIIRS (the successor sensor) for forward-looking work, and use MODIS for the historical record. The notice names no product-by-product VIIRS replacements, so check which VIIRS vegetation products match what you need.
+- **ECOSTRESS coverage.** The new Version 3 products cover acquisitions from October 1, 2025 onward, with earlier data processed later. I couldn't confirm how often it passes over Nigeria. Check before relying on it.
+- **GRACE.** GRACE-FO is still the active mission. Its successor, GRACE-C, is scheduled for December 2028, and I couldn't confirm how healthy GRACE-FO is today.
+- **Resolution mismatch.** POWER (about 50 km), IMERG (10 km) and SMAP (9 km) are all coarser than a farm. Treat them as the local climate and moisture background for the area, and say so in the tool's output.
+- **SMAP.** It is modelled and satellite-based, not a field measurement, in the same spirit as your doubt about iSDAsoil. Show it with that label.
+- **SRTM.** It dates from 2000, so it won't show recent terrain changes. That rarely matters for slope.
+
+I took the resolutions, dates and product names for SMAP, IMERG, SRTM, Landsat and MODIS from memory. I didn't confirm them in this session, so I'll verify them before we code against them. The POWER page confirms the API is public with no login. It lists hourly, daily, monthly and climatology endpoints and does not state a spatial resolution, so the 0.5° figure above is also from memory.
+
+## Free and how to get it
+
+All of it is free. The access routes:
+
+1. **NASA POWER:** No account and no key. It has a web API and plain HTTP requests, so it's the easiest first step.
+2. **Earthdata Login:** A free account at earthdata.nasa.gov, needed for IMERG, SMAP, MODIS or VIIRS, SRTM or NASADEM, ECOSTRESS and GRACE.
+3. **`earthaccess` (Python):** One library that logs in and searches and downloads from all the NASA archives above.
+4. **AppEEARS:** A NASA web service that extracts values for a point, such as one farm, from MODIS, SRTM, SMAP and others, and returns a small table. It saves you from downloading huge files.
+5. **Landsat:** Free from USGS, and from NASA through HLS, a harmonised 30 m product.
+
+I'd start with POWER, IMERG, SRTM and a vegetation index, all pulled at one coordinate, and put them in the same notebook as the soil data. Let me know when you'd like to start coding.
+
+Sources:
+- [Transition from MODIS to VIIRS (NASA Earthdata)](https://www.earthdata.nasa.gov/data/alerts-outages/transition-from-modis-viirs)
+- [ECOSTRESS Version 3 higher-level data products released (NASA Earthdata)](https://www.earthdata.nasa.gov/data/alerts-outages/ecostress-version-3-higher-level-data-products-released)
+- [GRACE-C implementation status overview](https://cpaess.ucar.edu/abstract-grace-fo-2025/grace-c-implementation-status-overview)
+- [NASA POWER API summary](https://power.larc.nasa.gov/llms.txt)
+- [GPM IMERG Final Precipitation L3 daily V07 (GES DISC)](https://www.earthdata.nasa.gov/data/catalog/ges-disc-gpm-3imergdf-07)
+- [SMAP L4 9 km surface and root zone soil moisture (NSIDC)](https://nsidc.org/data/spl4smgp)
+
+
+
