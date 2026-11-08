@@ -39,6 +39,32 @@ class SqlStore:
     def read(self, name):
         return pd.read_sql_table(name, self.engine)
 
+    def has_table(self, name):
+        return inspect(self.engine).has_table(name)
+
+    def read_where(self, name, **keys):
+        if not self.has_table(name):
+            return pd.DataFrame()
+        table = Table(name, MetaData(), autoload_with=self.engine)
+        query = select(table)
+        for col, val in keys.items():
+            many = isinstance(val, (list, tuple, set))
+            query = query.where(table.c[col].in_(list(val)) if many else table.c[col] == val)
+        with self.engine.connect() as conn:
+            return pd.read_sql(query, conn)
+
+    def replace_where(self, name, df, **keys):
+        self.replace_many([(name, df, keys)])
+
+    def replace_many(self, items):
+        # one transaction so a crash never leaves a half written series
+        with self.engine.begin() as conn:
+            for name, df, keys in items:
+                if inspect(conn).has_table(name):
+                    table = Table(name, MetaData(), autoload_with=conn)
+                    conn.execute(delete(table).where(*[table.c[c] == v for c, v in keys.items()]))
+                df.to_sql(name, conn, if_exists="append", index=False, chunksize=2000)
+
     def write(self, name, df, signature, note=""):
         with self.engine.begin() as conn:
             conn.execute(delete(self.meta).where(self.meta.c.name == name))

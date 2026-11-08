@@ -66,9 +66,8 @@ ABUJA = (9.0765, 7.3986)
 def test_series_shape_columns_and_location(climate):
     df = climate.power.series(*ABUJA, "2020-01-01", "2020-12-31", ["T2M", "PRECTOTCORR"])
     assert len(df) == 366 and df["date"].is_unique and df["date"].is_monotonic_increasing
-    assert list(df.columns) == ["date", "lat", "lon", "state", "geopolitical_zone", "grid_lat", "grid_lon", "T2M", "PRECTOTCORR"]
+    assert list(df.columns) == ["date", "lat", "lon", "state", "geopolitical_zone", "T2M", "PRECTOTCORR"]
     assert (df["state"] == "Federal Capital Territory").all() and (df["geopolitical_zone"] == "North Central").all()
-    assert df["grid_lat"].iloc[0] == 9.0 and df["grid_lon"].iloc[0] == 7.5
     assert df.attrs["units"] == {"T2M": "C", "PRECTOTCORR": "mm/day"}
     assert df.attrs["elevation_m"] == 480.5 and df.attrs["provisional"] is False
 
@@ -91,7 +90,7 @@ def test_second_call_comes_from_the_database(climate, power_session):
     again = climate.power.series(*ABUJA, "2020-01-01", "2020-06-30", ["T2M", "PRECTOTCORR"])
     assert len(power_session.gets) == calls
     assert np.allclose(first["T2M"], again["T2M"]) and again.attrs["units"] == first.attrs["units"]
-    assert again["grid_lat"].iloc[0] == 9.0 and again.attrs["elevation_m"] == 480.5
+    assert again.attrs["elevation_m"] == 480.5
 
 
 def test_a_narrower_range_and_a_second_climate_object_reuse_the_database(climate, power_session, settings, tmp_path):
