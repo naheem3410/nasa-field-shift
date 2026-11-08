@@ -1,8 +1,9 @@
 from .config import Settings
 from .regions import OutsideNigeria, Regions
 from .soil import SoilExplorer
+from .climate import Climate
 
-__all__ = ["OutsideNigeria", "Regions", "Settings", "SoilExplorer", "main"]
+__all__ = ["Climate", "OutsideNigeria", "Regions", "Settings", "SoilExplorer", "main"]
 
 
 def main() -> None:
