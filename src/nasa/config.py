@@ -13,6 +13,15 @@ def find_root(start=None):
     return here
 
 
+def env_setting(name, default):
+    value = (os.getenv(name) or "").strip()
+    return value or default
+
+
+def url_path(value):
+    return "/" + value.strip().lstrip("/")
+
+
 def _path(root, name, default):
     value = os.getenv(name)
     path = Path(value) if value else Path(default)

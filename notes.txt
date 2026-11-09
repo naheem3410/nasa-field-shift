@@ -20,6 +20,27 @@ Description
 Nigeria’s DSM data and soil database of Nigeria is a predictive or computer-assisted digital depiction of Nigeria’s soil types, properties and spatial distribution. In this novel DSM data and soil database, secondary data in the form of compiled hard copies, derived from the 1985 reconnaissance soil survey are transformed into vectors and symbols encoded and held as data structures within the map layout. The DSM data and its database hold information relating to the Nigerian soil in geographically referenced numerical format. Thus, it delineates quantitatively and interactively the 58 soil components (soil mapping units), based on three ecological zones, twenty-four broad geomorphic units and parent materials in Nigeria. These soil mapping units are numbered from ‘1a’ to ‘24b’ and provides much quantitative information for environmental modelling and analyses using the Nigeria’s DSM data and database (Refer to [1] for a full list of the mapping units that describes the Nigeria’s soil distribution and their spatial distinctions).
 
 
+4. National Agricultural Sample Survey 2023
+Agricultural Household Survey (for crop info)
+
+
+5. fao-gaez-crop-summary-data (for crop info)
+
+5. World Bank Data Catalog (for crop info)
+
+6. world-bank-General Household Survey - Panel 2010-2019, Uniform Panel Data-NGA_2010-2019_NUPD_v01_M_CSV
+
+7. Jos Plateau crop type map_Crop_Type_Map
+
+8. 
+
+
+
+
+
+well done for not recognizing the synthetic data, always remember, authenticity, accuracy, correctness and traceability to established source remains the goal, because we are doing this for farmers and we cannot use untrusted/unverified data, and we must not engineer data ourselves and we must not look for shortut. add the Nsukka, Moniya and Badeggi results as rules with quote checks and run the three-agent verification again.
+
+
 
 
 Practical suggestions

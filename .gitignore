@@ -19,3 +19,7 @@ data/*
 power_column_guide.csv
 *.csv
 
+# Claude working notes
+CLAUDE.md
+DATA_SOURCES.md
+

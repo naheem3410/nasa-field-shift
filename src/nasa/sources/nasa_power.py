@@ -7,9 +7,12 @@ from datetime import date, datetime, timedelta, timezone
 import pandas as pd
 import requests
 
+from ..config import env_setting, url_path
+
 log = logging.getLogger("nasa")
 
-BASE_URL = "https://power.larc.nasa.gov/api/temporal/daily/point"
+BASE_URL = "https://power.larc.nasa.gov"
+DAILY_PATH = "/api/temporal/daily/point"
 RETRY_CODES = {429, 502, 503, 504}
 VALUES_TABLE = "power_daily"
 COVERAGE_TABLE = "power_coverage"
@@ -52,12 +55,14 @@ def _chunks(start, end):
 
 
 class NasaPower:
-    def __init__(self, regions, store, cache, session=None, base_url=BASE_URL):
+    def __init__(self, regions, store, cache, session=None, base_url=None):
         self.regions = regions
         self.store = store
         self.cache = cache
         self.session = session or requests.Session()
-        self.base_url = base_url
+        # an explicit base_url is the whole address, otherwise it is built from the .env settings
+        site = env_setting("POWER_BASE_URL", BASE_URL).rstrip("/")
+        self.base_url = base_url or site + url_path(env_setting("POWER_DAILY_PATH", DAILY_PATH))
 
     def _params(self, parameters):
         names = DEFAULT_PARAMETERS if parameters is None else list(parameters)

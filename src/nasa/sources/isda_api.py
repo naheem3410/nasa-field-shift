@@ -6,9 +6,14 @@ import time
 import pandas as pd
 import requests
 
+from ..config import env_setting, url_path
+
 log = logging.getLogger("nasa")
 
 BASE_URL = "https://api.isda-africa.com"
+LOGIN_PATH = "/login"
+LAYERS_PATH = "/isdasoil/v2/layers"
+PROPERTY_PATH = "/isdasoil/v2/soilproperty"
 RETRY_CODES = {429, 502, 503, 504}
 BASE_COLUMNS = [
     "lat", "lon", "state", "geopolitical_zone", "property", "description", "theme",
@@ -21,11 +26,14 @@ class IsdaApiError(RuntimeError):
 
 
 class IsdaSoilApi:
-    def __init__(self, regions, cache, session=None, base_url=BASE_URL):
+    def __init__(self, regions, cache, session=None, base_url=None):
         self.regions = regions
         self.cache = cache
         self.session = session or requests.Session()
-        self.base_url = base_url
+        self.base_url = (base_url or env_setting("ISDA_BASE_URL", BASE_URL)).rstrip("/")
+        self.login_path = url_path(env_setting("ISDA_LOGIN_PATH", LOGIN_PATH))
+        self.layers_path = url_path(env_setting("ISDA_LAYERS_PATH", LAYERS_PATH))
+        self.property_path = url_path(env_setting("ISDA_PROPERTY_PATH", PROPERTY_PATH))
         self.token = None
 
     def _login(self):
@@ -41,7 +49,7 @@ class IsdaSoilApi:
             "client_id": "string",
             "client_secret": "string",
         }
-        resp = self.session.post(f"{self.base_url}/login", data=form, timeout=30)
+        resp = self.session.post(f"{self.base_url}{self.login_path}", data=form, timeout=30)
         if resp.status_code != 200:
             raise IsdaApiError(f"login failed with status {resp.status_code}")
         token = resp.json().get("access_token")
@@ -74,7 +82,7 @@ class IsdaSoilApi:
         key = "isda:v2:layers"
         text = self.cache.get(key)
         if text is None:
-            text = self._get("/isdasoil/v2/layers")
+            text = self._get(self.layers_path)
             self.cache.set(key, text)
         rows = []
         for name, info in json.loads(text)["property"].items():
@@ -94,7 +102,7 @@ class IsdaSoilApi:
         text = self.cache.get(key)
         if text is None:
             params = {"lon": f"{lon:.5f}", "lat": f"{lat:.5f}", "depth": depth, "property": prop}
-            text = self._get("/isdasoil/v2/soilproperty", params)
+            text = self._get(self.property_path, params)
             self.cache.set(key, text)
         return text
 
