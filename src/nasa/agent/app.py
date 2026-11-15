@@ -5,7 +5,12 @@ from contextlib import asynccontextmanager
 
 import openai
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 
 from . import meta_cache
 from .advice import fetch_advice
@@ -15,6 +20,8 @@ from .models import ExtractionResponse, HealthResponse, TextRequest
 load_dotenv()
 
 log = logging.getLogger("nasa.agent")
+
+limiter = Limiter(key_func=get_remote_address)
 
 MAX_AUDIO_BYTES = 25 * 1024 * 1024  # 25 MB — Whisper limit
 SUPPORTED_TYPES = {
@@ -38,13 +45,18 @@ def create_app() -> FastAPI:
         description="Converts a farmer's spoken message into structured JSON for POST /api/v1/advice.",
         lifespan=lifespan,
     )
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_middleware(SlowAPIMiddleware)
 
     @app.get("/health", response_model=HealthResponse)
-    def health() -> HealthResponse:
+    @limiter.limit("60/minute")
+    def health(request: Request) -> HealthResponse:
         return HealthResponse(status="ok", meta_loaded=meta_cache.is_loaded())
 
     @app.post("/extract/text", response_model=ExtractionResponse)
-    def extract_text(body: TextRequest) -> ExtractionResponse:
+    @limiter.limit("10/minute")
+    def extract_text(request: Request, body: TextRequest) -> ExtractionResponse:
         meta = meta_cache.get()
         result = extract(transcript=body.message, meta=meta, previous=body.context)
         if result.confidence == "complete":
@@ -52,7 +64,9 @@ def create_app() -> FastAPI:
         return result
 
     @app.post("/extract/voice", response_model=ExtractionResponse)
+    @limiter.limit("10/minute")
     async def extract_voice(
+        request: Request,
         audio: UploadFile = File(...),
         state: str | None = Form(None),
         lga: str | None = Form(None),
