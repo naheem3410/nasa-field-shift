@@ -28,6 +28,7 @@ dependencies = [
     "uvicorn[standard]>=0.34.0",
     "openai>=1.75.0",
     "python-multipart>=0.0.20",
+    "slowapi>=0.1.10",
 ]
 
 [project.scripts]
